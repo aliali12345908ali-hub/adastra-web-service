@@ -151,3 +151,33 @@ def admin_dashboard(db: Session = Depends(get_db)):
     }
 
 
+import stripe
+from fastapi import HTTPException
+
+# مفتاح السكريت الخاص ببوابة Stripe (يتم وضعه لاحقاً كمتغير بيئي آمن في Railway)
+stripe.api_key = "sk_test_your_stripe_secret_key"
+
+@app.post("/api/v1/create-checkout-session")
+def create_checkout_session(user_email: str):
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': 'Adastra VIP Global Subscription',
+                    },
+                    'unit_amount': 2900, # 29.00 دولار شهرياً
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            success_url="https://adastra.im/success?session_id={CHECKOUT_SESSION_ID}",
+            cancel_url="https://adastra.im/cancel",
+            customer_email=user_email,
+        )
+        return {"status": "success", "checkout_url": checkout_session.url}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
