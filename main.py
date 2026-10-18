@@ -51,3 +51,26 @@ def get_system_status(db: Session = Depends(get_db)):
 
 
 
+from pydantic import BaseModel
+from models import User
+
+class UserCreate(BaseModel):
+    email: str
+    password: str
+
+@app.post("/api/v1/register")
+def register_user(user: UserCreate, db: Session = Depends(get_db)):
+    # التحقق من عدم وجود المستخدم مسبقاً
+    existing_user = db.query(User).filter(User.email == user.email).first()
+    if existing_user:
+        return {"status": "error", "message": "User already exists!"}
+    
+    # إنشاء المستخدم الجديد (ملاحظة: في الإنتاج الحقيقي يتم تشفير كلمة المرور)
+    new_user = User(email=user.email, hashed_password=user.password)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    
+    return {"status": "success", "message": "User registered successfully", "user_id": new_user.id}
+
+
