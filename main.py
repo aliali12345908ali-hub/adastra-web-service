@@ -34,3 +34,20 @@ def get_system_status():
     return {"status": "active", "message": "Adastra system is fully operational and scaling!"}
 
 
+from fastapi import Depends, FastAPI
+from sqlalchemy.orm import Session
+from database import get_db
+from models import SystemLog
+
+@app.get("/api/v1/status")
+def get_system_status(db: Session = Depends(get_db)):
+    # حفظ سجل الحركة في قاعدة بيانات PostgreSQL
+    new_log = SystemLog(action="STATUS_CHECK", details="API status checked successfully from Termux/Railway")
+    db.add(new_log)
+    db.commit()
+    db.refresh(new_log)
+    
+    return {"status": "active", "message": "Adastra system is fully operational and scaling!", "log_id": new_log.id}
+
+
+

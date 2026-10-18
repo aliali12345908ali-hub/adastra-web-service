@@ -22,3 +22,4 @@ class SystemLog(Base):
     details = Column(String)
 
 
+
