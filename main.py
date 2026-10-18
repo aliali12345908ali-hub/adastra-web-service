@@ -1,3 +1,12 @@
+o
+from datetime import datetime, timedelta
+from typing import Union
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+
+
 from fastapi import FastAPI
 
 app = FastAPI(title="Adastra Core API")
@@ -13,3 +22,10 @@ def read_root():
 @app.get("/health")
 def health_check():
     return {"status": "healthy", "database": "connected"}
+
+
+git add .
+git commit -m "Add JWT authentication and SQLAlchemy database configuration"
+git push
+
+
