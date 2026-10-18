@@ -212,3 +212,9 @@ def create_checkout_session(user_email: str):
         raise HTTPException(status_code=400, detail=str(e))
 
 
+cd ~/adastra_web_service
+nano main.py
+
+
+
+
