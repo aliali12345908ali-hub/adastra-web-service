@@ -29,3 +29,8 @@ git commit -m "Add JWT authentication and SQLAlchemy database configuration"
 git push
 
 
+@app.get("/api/v1/status")
+def get_system_status():
+    return {"status": "active", "message": "Adastra system is fully operational and scaling!"}
+
+
