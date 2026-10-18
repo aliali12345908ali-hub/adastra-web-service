@@ -74,3 +74,80 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     return {"status": "success", "message": "User registered successfully", "user_id": new_user.id}
 
 
+from fastapi import HTTPException, status
+from pydantic import BaseModel
+from models import User, SystemLog
+
+# نموذج تسجيل الدخول
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+@app.post("/api/v1/login")
+def login_user(user: UserLogin, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.email == user.email).first()
+    if not db_user or db_user.hashed_password != user.password:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+        )
+    return {
+        "status": "success", 
+        "message": "Login successful!", 
+        "user_email": db_user.email, 
+        "is_vip": db_user.is_vip
+    }
+
+# نموذج لوحة تحكم المشرفين لعرض الإحصائيات وسجلات النظام
+@app.get("/api/v1/admin/dashboard")
+def admin_dashboard(db: Session = Depends(get_db)):
+    total_users = db.query(User).count()
+    total_logs = db.query(SystemLog).count()
+    recent_logs = db.query(SystemLog).order_by(SystemLog.id.desc()).limit(5).all()
+    
+    return {
+        "platform": "Adastra Global SaaS",
+        "total_registered_users": total_users,
+        "total_system_logs": total_logs,
+        "recent_activity": [{"id": log.id, "action": log.action, "details": log.details} for log in recent_logs]
+    }
+
+from fastapi import HTTPException, status
+from pydantic import BaseModel
+from models import User, SystemLog
+
+# نموذج تسجيل الدخول
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+@app.post("/api/v1/login")
+def login_user(user: UserLogin, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.email == user.email).first()
+    if not db_user or db_user.hashed_password != user.password:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+        )
+    return {
+        "status": "success", 
+        "message": "Login successful!", 
+        "user_email": db_user.email, 
+        "is_vip": db_user.is_vip
+    }
+
+# نموذج لوحة تحكم المشرفين لعرض الإحصائيات وسجلات النظام
+@app.get("/api/v1/admin/dashboard")
+def admin_dashboard(db: Session = Depends(get_db)):
+    total_users = db.query(User).count()
+    total_logs = db.query(SystemLog).count()
+    recent_logs = db.query(SystemLog).order_by(SystemLog.id.desc()).limit(5).all()
+    
+    return {
+        "platform": "Adastra Global SaaS",
+        "total_registered_users": total_users,
+        "total_system_logs": total_logs,
+        "recent_activity": [{"id": log.id, "action": log.action, "details": log.details} for log in recent_logs]
+    }
+
+
