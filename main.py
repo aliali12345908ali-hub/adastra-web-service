@@ -1,16 +1,16 @@
 import os
 import time
-from fastapi import FastAPI, HTTPException, Request, Depends, status
+from fastapi import FastAPI, BackgroundTasks, Request, status
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
-from typing import Optional, Dict
+from typing import Dict
 
 app = FastAPI(
     title="Adastra Global CaaS Ecosystem",
     description="High-performance, secure, and resilient CaaS & SaaS Platform",
-    version="2.0.0"
+    version="2.1.0"
 )
 
+# نظام Rate Limiting النشط
 RATE_LIMIT_STORE: Dict[str, list] = {}
 MAX_REQUESTS_PER_MINUTE = 10
 
@@ -18,7 +18,7 @@ MAX_REQUESTS_PER_MINUTE = 10
 async def rate_limit_middleware(request: Request, call_next):
     client_ip = request.client.host or "127.0.0.1"
     current_time = time.time()
-
+    
     if client_ip in RATE_LIMIT_STORE:
         RATE_LIMIT_STORE[client_ip] = [
             t for t in RATE_LIMIT_STORE[client_ip] if current_time - t < 60
@@ -40,13 +40,22 @@ async def rate_limit_middleware(request: Request, call_next):
     response = await call_next(request)
     return response
 
+# دالة خلفية تحاكي الفحص الثقيل
+def run_heavy_security_scan(target: str):
+    time.sleep(5)  # محاكاة وقت المعالجة في الخلفية
+    print(f"[Adastra Background Worker] Scan completed successfully for target: {target}")
+
+# نقطة النهاية مع دعم Background Tasks
 @app.post("/caas/scan")
-async def caas_security_scan(target: str):
+async def caas_security_scan(target: str, background_tasks: BackgroundTasks):
+    # إضافة المهمة للعمل في الخلفية
+    background_tasks.add_task(run_heavy_security_scan, target)
+    
     return {
-        "status": "success",
+        "status": "accepted",
         "target": target,
-        "message": "Adastra CaaS security assessment initiated successfully.",
-        "risk_level": "Low",
+        "message": "Adastra CaaS security assessment queued successfully in background.",
+        "task_id": f"task_{int(time.time())}",
         "rate_limiting": "Active & Protected"
     }
 
@@ -55,5 +64,5 @@ async def root():
     return {
         "platform": "Adastra CaaS Ecosystem",
         "status": "Operational",
-        "security_layer": "Rate Limiting & DDoS Shield Active"
+        "features": ["Rate Limiting", "Background Tasks Workers"]
     }
