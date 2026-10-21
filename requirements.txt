@@ -1,6 +1,6 @@
 fastapi
 uvicorn
-gunicorn
 stripe
-pytest
 pydantic
+pytest
+gunicorn
