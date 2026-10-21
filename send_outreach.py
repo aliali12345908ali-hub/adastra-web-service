@@ -1,16 +1,22 @@
-import smtplib
-from email.mime.text import MIMEText
+import csv
+import os
 
-def send_b2b_offer(target_email, company_name):
-    msg = MIMEText(f"Bonjour, nous proposons des solutions sur-mesure pour {company_name} via Adastra Web Service...")
-    msg['Subject'] = f"Opportunité de partenariat avec {company_name}"
-    msg['From'] = "votre_email@gmail.com"
-    msg['To'] = target_email
+LEADS_FILE = "enterprise_leads.csv"
 
-    # قم بضبط إعدادات سيرفر الإرسال هنا
-    print(f"Message envoyé à {company_name} ({target_email})")
+def process_outreach():
+    if not os.path.exists(LEADS_FILE):
+        print("❌ لم يتم العثور على ملف العملاء enterprise_leads.csv")
+        return
 
-# تجربة
-# send_b2b_offer("client@enterprise.com", "Big Corp")
+    print("🚀 بدء تجهيز رسائل العروض للعملاء الكبار B2B...\n")
+    with open(LEADS_FILE, mode='r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            company = row.get("Company Name")
+            email = row.get("Email")
+            status = row.get("Status")
+            
+            print(f"📧 جاهز للإرسال إلى: {company} | الإيميل: {email} | الحالة: {status}")
 
-
+if __name__ == "__main__":
+    process_outreach()
