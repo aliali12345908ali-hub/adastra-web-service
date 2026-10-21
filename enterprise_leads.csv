@@ -1,3 +1,4 @@
 Company Name,Email,Status
 cat << 'EOF' > collect_leads.py,import csv,Pending
 "echo "".env"" >> .gitignore",git add .,Pending
+python -c ',"from collect_leads import add_lead, show_leads",Pending
