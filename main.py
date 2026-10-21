@@ -24,7 +24,6 @@ def health_check():
     return {"status": "healthy", "database": "connected"}
 
 
-git commit -m "Add JWT authentication and SQLAlchemy database configuration"
 git push
 
 
