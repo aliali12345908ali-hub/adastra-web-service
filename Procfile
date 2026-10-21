@@ -1,1 +1,1 @@
-web: python send_outreach.py
+web: gunicorn app:app
