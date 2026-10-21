@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, HTTPException, Security, Depends
 from fastapi.security import APIKeyHeader
 import stripe
 
-app = FastAPI()
+app = FastAPI(title="Adastra CaaS", version="1.0.0")
 
 stripe.api_key = "sk_test_..."
 endpoint_secret = "whsec_..."
@@ -13,6 +13,15 @@ USER_DATABASE = {
 }
 
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+@app.get("/")
+async def root():
+    return {
+        "platform": "Adastra CaaS",
+        "status": "online",
+        "message": "أهلاً بك في منصة الحاويات السحابية المدفوعة 🚀",
+        "docs": "/docs"
+    }
 
 async def verify_api_key_advanced(api_key: str = Depends(api_key_header)):
     if not api_key or api_key not in USER_DATABASE:
