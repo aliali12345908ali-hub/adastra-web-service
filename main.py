@@ -1,83 +1,45 @@
-import os
-import time
-from fastapi import FastAPI, BackgroundTasks, Request, status
-from fastapi.responses import JSONResponse
-from typing import Dict
+from fastapi import FastAPI, Request, HTTPException, Security, Depends
+from fastapi.security import APIKeyHeader
+import stripe
 
-app = FastAPI(
-    title="Adastra Global CaaS Ecosystem",
-    description="High-performance, secure, and resilient CaaS & SaaS Platform",
-    version="2.3.0"
-)
+app = FastAPI()
 
-# سجل المقاييس والإحصائيات
-METRICS_DATA = {
-    "total_requests": 0,
-    "start_time": time.time()
-}
+stripe.api_key = "sk_test_..."
+endpoint_secret = "whsec_..."
 
-RATE_LIMIT_STORE: Dict[str, list] = {}
-MAX_REQUESTS_PER_MINUTE = 10
+@app.post("/webhook/stripe")
+async def stripe_webhook(request: Request):
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature")
 
-@app.middleware("http")
-async def metrics_and_rate_limit_middleware(request: Request, call_next):
-    start_time = time.time()
-    METRICS_DATA["total_requests"] += 1
-    client_ip = request.client.host or "127.0.0.1"
-    
-    if client_ip in RATE_LIMIT_STORE:
-        RATE_LIMIT_STORE[client_ip] = [
-            t for t in RATE_LIMIT_STORE[client_ip] if start_time - t < 60
-        ]
-    else:
-        RATE_LIMIT_STORE[client_ip] = []
-
-    if len(RATE_LIMIT_STORE[client_ip]) >= MAX_REQUESTS_PER_MINUTE:
-        return JSONResponse(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            content={
-                "status": "error",
-                "message": "Rate limit exceeded. Too many requests, please try again later.",
-                "limit": f"{MAX_REQUESTS_PER_MINUTE} requests per minute"
-            }
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, endpoint_secret
         )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-    RATE_LIMIT_STORE[client_ip].append(start_time)
-    
-    response = await call_next(request)
-    process_time = time.time() - start_time
-    response.headers["X-Process-Time"] = f"{process_time:.4f}s"
-    return response
+    if event["type"] == "payment_intent.succeeded":
+        payment_intent = event["data"]["object"]
+        print(f"💰 تم استلام المبلغ بنجاح: {payment_intent['amount']}")
 
-@app.get("/metrics")
-async def get_metrics():
-    uptime = time.time() - METRICS_DATA["start_time"]
+    return {"status": "success"}
+
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+VALID_API_KEYS = {"adastra_vip_key_123", "adastra_pro_key_456"}
+
+async def verify_api_key(api_key: str = Depends(api_key_header)):
+    if api_key not in VALID_API_KEYS:
+        raise HTTPException(
+            status_code=403, 
+            detail="🔑 مفتاح الـ API غير صالح أو انتهى اشتراكك"
+        )
+    return api_key
+
+@app.post("/caas/scan/pro")
+async def protected_scan(target: str, key: str = Depends(verify_api_key)):
     return {
-        "platform": "Adastra CaaS Ecosystem",
-        "uptime_seconds": round(uptime, 2),
-        "total_requests_handled": METRICS_DATA["total_requests"],
-        "status": "Healthy"
-    }
-
-def run_heavy_security_scan(target: str):
-    time.sleep(2)
-    print(f"[Adastra Background Worker] Scan completed for: {target}")
-
-@app.post("/caas/scan")
-async def caas_security_scan(target: str, background_tasks: BackgroundTasks):
-    background_tasks.add_task(run_heavy_security_scan, target)
-    return {
-        "status": "accepted",
+        "status": "authorized",
         "target": target,
-        "message": "Adastra CaaS security assessment queued successfully in background.",
-        "task_id": f"task_{int(time.time())}",
-        "rate_limiting": "Active & Protected"
-    }
-
-@app.get("/")
-async def root():
-    return {
-        "platform": "Adastra CaaS Ecosystem",
-        "status": "Operational",
-        "features": ["Rate Limiting", "Background Tasks Workers", "Live Performance Metrics"]
+        "message": "جاري الفحص المتقدم للعميل المدفوع 🚀"
     }
