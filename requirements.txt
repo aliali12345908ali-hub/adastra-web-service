@@ -1,6 +1,6 @@
-fastapi
-uvicorn
-stripe
-pydantic
-pytest
-gunicorn
+fastapi==0.110.0
+uvicorn==0.28.0
+stripe==8.0.0
+pydantic==2.6.4
+pytest==8.1.1
+gunicorn==21.2.0
